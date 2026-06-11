@@ -19,6 +19,7 @@ from .const import (
     API_ACTION_PATH,
     API_STATUS_PATH,
     CONF_CORS_ORIGINS,
+    CONF_ENABLED,
     CONF_ENTITIES,
     CONF_PIN_HASH,
     DOMAIN,
@@ -76,6 +77,14 @@ def get_config_entry(hass: HomeAssistant) -> ConfigEntry | None:
     """Return the single Gate Portal config entry, if present."""
     entries = hass.config_entries.async_entries(DOMAIN)
     return entries[0] if entries else None
+
+
+def get_rate_limiter(hass: HomeAssistant) -> RateLimiter:
+    """Return the shared rate limiter for Gate Portal requests."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    if "rate_limiter" not in domain_data:
+        domain_data["rate_limiter"] = RateLimiter()
+    return domain_data["rate_limiter"]
 
 
 def get_cors_origin(request: web.Request, allowed_origins: list[str]) -> str | None:
@@ -156,10 +165,6 @@ class GatePortalBaseView(HomeAssistantView):
     requires_auth = False
     cors_allowed = True
 
-    def __init__(self, rate_limiter: RateLimiter) -> None:
-        """Initialize view with shared rate limiter."""
-        self._rate_limiter = rate_limiter
-
     def _json_response(
         self,
         request: web.Request,
@@ -185,9 +190,10 @@ class GatePortalStatusView(GatePortalBaseView):
     async def get(self, request: web.Request) -> web.Response:
         """Handle status requests."""
         hass: HomeAssistant = request.app["hass"]
+        rate_limiter = get_rate_limiter(hass)
 
         try:
-            entry = verify_request_pin(hass, request, self._rate_limiter)
+            entry = verify_request_pin(hass, request, rate_limiter)
         except web.HTTPServiceUnavailable as err:
             entry = get_config_entry(hass)
             allowed_origins = []
@@ -225,6 +231,7 @@ class GatePortalActionView(GatePortalBaseView):
     async def post(self, request: web.Request) -> web.Response:
         """Handle action requests."""
         hass: HomeAssistant = request.app["hass"]
+        rate_limiter = get_rate_limiter(hass)
 
         try:
             body = await request.json()
@@ -232,7 +239,7 @@ class GatePortalActionView(GatePortalBaseView):
             raise HTTPBadRequest from err
 
         try:
-            entry = verify_request_pin(hass, request, self._rate_limiter, body)
+            entry = verify_request_pin(hass, request, rate_limiter, body)
             data = ACTION_SCHEMA(body)
         except web.HTTPServiceUnavailable as err:
             entry = get_config_entry(hass)
