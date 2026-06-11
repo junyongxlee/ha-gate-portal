@@ -23,19 +23,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gate Portal from a config entry."""
-    rate_limiter = RateLimiter()
-    status_view = GatePortalStatusView(rate_limiter)
-    action_view = GatePortalActionView(rate_limiter)
+    domain_data = hass.data.setdefault(DOMAIN, {})
 
-    hass.http.register_view(status_view)
-    hass.http.register_view(action_view)
+    if "rate_limiter" not in domain_data:
+        rate_limiter = RateLimiter()
+        hass.http.register_view(GatePortalStatusView(rate_limiter))
+        hass.http.register_view(GatePortalActionView(rate_limiter))
+        domain_data["rate_limiter"] = rate_limiter
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        "entry": entry,
-        "rate_limiter": rate_limiter,
-        "views": [status_view, action_view],
-    }
+    domain_data[entry.entry_id] = {"entry": entry}
 
     _LOGGER.debug("Gate Portal entry %s set up", entry.entry_id)
     return True
@@ -43,13 +39,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    data = hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
-    if data:
-        for view in data.get("views", []):
-            hass.http.async_unregister_view(view)
-
-    if not hass.data.get(DOMAIN):
-        hass.data.pop(DOMAIN, None)
+    domain_data = hass.data.get(DOMAIN)
+    if domain_data:
+        domain_data.pop(entry.entry_id, None)
+        # Keep rate_limiter and registered views for options-flow reloads.
 
     _LOGGER.debug("Gate Portal entry %s unloaded", entry.entry_id)
     return True

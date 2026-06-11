@@ -154,6 +154,7 @@ class GatePortalBaseView(HomeAssistantView):
     """Shared helpers for Gate Portal views."""
 
     requires_auth = False
+    cors_allowed = True
 
     def __init__(self, rate_limiter: RateLimiter) -> None:
         """Initialize view with shared rate limiter."""
@@ -172,15 +173,6 @@ class GatePortalBaseView(HomeAssistantView):
         if entry is not None:
             allowed_origins = entry.options.get(CONF_CORS_ORIGINS, [])
         response = self.json(data, status_code=status)
-        return add_cors_headers(response, request, allowed_origins)
-
-    async def options(self, request: web.Request) -> web.Response:
-        """Handle CORS preflight requests."""
-        entry = get_config_entry(request.app["hass"])
-        allowed_origins = []
-        if entry is not None:
-            allowed_origins = entry.options.get(CONF_CORS_ORIGINS, [])
-        response = web.Response(status=204)
         return add_cors_headers(response, request, allowed_origins)
 
 
