@@ -27,7 +27,7 @@ Or manually:
 
 ## Configuration
 
-During setup you choose exposed entities, the guest PIN, and whether the portal is enabled. To change settings later, open **Settings → Devices & services → Gate Portal** and choose **Configure**.
+During setup you choose exposed entities, the guest PIN, and whether the portal is enabled. To change settings later, open **Settings → Devices & services → Gate Portal**, click the **⋮** menu on the integration card, and choose **Configure**.
 
 - **Exposed entities** — devices guests can control via the API
 - **Guest PIN** — required for API access

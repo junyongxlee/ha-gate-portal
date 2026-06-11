@@ -121,6 +121,14 @@ class GatePortalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=_build_schema({}, require_pin=True),
         )
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> GatePortalOptionsFlow:
+        """Get the options flow for this handler."""
+        return GatePortalOptionsFlow()
+
 
 class GatePortalOptionsFlow(config_entries.OptionsFlowWithReload):
     """Handle options flow for Gate Portal."""
@@ -145,11 +153,3 @@ class GatePortalOptionsFlow(config_entries.OptionsFlowWithReload):
             step_id="init",
             data_schema=_build_schema(options),
         )
-
-
-@callback
-def async_get_options_flow(
-    config_entry: config_entries.ConfigEntry,
-) -> GatePortalOptionsFlow:
-    """Get the options flow for this handler."""
-    return GatePortalOptionsFlow(config_entry)
