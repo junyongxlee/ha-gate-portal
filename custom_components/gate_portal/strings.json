@@ -3,7 +3,19 @@
     "step": {
       "user": {
         "title": "Gate Portal",
-        "description": "Set up the Gate Portal API for guest access to selected devices."
+        "description": "Choose which devices guests can control, set the access PIN, and configure portal availability.",
+        "data": {
+          "entities": "Exposed entities",
+          "pin": "Guest PIN",
+          "enabled": "Portal enabled",
+          "cors_origins": "Allowed CORS origins"
+        },
+        "data_description": {
+          "entities": "Entities guests are allowed to control through the portal.",
+          "pin": "Minimum 4 characters.",
+          "enabled": "When disabled, the portal API returns unavailable.",
+          "cors_origins": "Frontend URLs allowed to call the API from a browser (e.g. https://portal.example.com)."
+        }
       }
     },
     "abort": {
